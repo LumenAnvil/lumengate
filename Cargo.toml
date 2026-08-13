@@ -1,0 +1,39 @@
+[package]
+name = "lumengate"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.91.0"
+license = "Apache-2.0"
+description = "A deployable, reusable payment splitter (revenue router) for Stellar Soroban."
+repository = "https://github.com/LumenAnvil/lumengate"
+readme = "README.md"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+doctest = false
+
+[dependencies]
+soroban-sdk = "27.0.5"
+
+[dev-dependencies]
+soroban-sdk = { version = "27.0.5", features = ["testutils"] }
+
+# Build settings required by the Soroban runtime. `stellar contract build` uses
+# the `release` profile; `overflow-checks` stays on so arithmetic mistakes trap
+# instead of silently wrapping.
+[profile.release]
+opt-level = "z"
+overflow-checks = true
+debug = 0
+strip = "symbols"
+debug-assertions = false
+panic = "abort"
+codegen-units = 1
+lto = true
+
+# Same as `release` but keeps debug assertions and logs, for troubleshooting a
+# deployment against a local/test network.
+[profile.release-with-logs]
+inherits = "release"
+debug-assertions = true

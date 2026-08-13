@@ -1,0 +1,7 @@
+# Keep shell scripts LF-only so they run on Linux and macOS regardless of the
+# platform they were committed from.
+*.sh text eol=lf
+
+*.rs text
+*.toml text
+*.md text

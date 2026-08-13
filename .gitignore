@@ -1,0 +1,11 @@
+/target
+**/*.rs.bk
+*.wasm
+
+# Regenerated on every `cargo test` run
+/test_snapshots
+
+# Editor state
+.vscode/
+.idea/
+.DS_Store
