@@ -14,10 +14,10 @@ crate-type = ["cdylib"]
 doctest = false
 
 [dependencies]
-soroban-sdk = "27.0.5"
+soroban-sdk = "29.0.1"
 
 [dev-dependencies]
-soroban-sdk = { version = "27.0.5", features = ["testutils"] }
+soroban-sdk = { version = "29.0.1", features = ["testutils"] }
 
 # Build settings required by the Soroban runtime. `stellar contract build` uses
 # the `release` profile; `overflow-checks` stays on so arithmetic mistakes trap
