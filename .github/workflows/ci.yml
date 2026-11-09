@@ -17,7 +17,7 @@ jobs:
     name: Format, lint and test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install the Rust toolchain
         run: rustup toolchain install stable --profile minimal --component rustfmt,clippy
@@ -39,7 +39,7 @@ jobs:
     name: Build the contract wasm
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install the Rust toolchain
         run: rustup toolchain install stable --profile minimal
@@ -59,7 +59,7 @@ jobs:
     name: Build on the declared MSRV
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Cargo.toml pins rust-version; CI must prove that version still builds.
       - name: Install the MSRV toolchain (1.91.0)
