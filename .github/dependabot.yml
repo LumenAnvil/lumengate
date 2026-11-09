@@ -1,0 +1,21 @@
+version: 2
+updates:
+  # Rust dependencies, including the Soroban SDK — grouped so a routine bump is
+  # a single PR rather than one per crate.
+  - package-ecosystem: cargo
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      cargo:
+        patterns: ["*"]
+
+  # Keep the GitHub Actions in the CI workflow current.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
