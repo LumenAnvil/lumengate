@@ -111,6 +111,8 @@ stellar contract invoke --id $SPLITTER --source-account anyone --network testnet
 | `release(who) -> i128` | Pays `who` everything they are owed; returns the amount moved. |
 | `release_all() -> i128` | Pays every recipient; returns the total moved. |
 | `releasable(who) -> i128` | What `release(who)` would pay right now. |
+| `releasable_all() -> Vec<Pending>` | What every recipient is owed right now, in order; a read-only companion to `release_all`. |
+| `pending_total() -> i128` | Sum of all owed amounts; what `release_all` would move right now. |
 | `shares(who) -> u32` | `who`'s share weight, or `0` if not a recipient. |
 | `released(who) -> i128` | Total ever paid to `who`. |
 | `total_released() -> i128` | Total ever paid to all recipients. |

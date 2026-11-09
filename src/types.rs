@@ -36,6 +36,18 @@ pub struct Config {
     pub total_shares: u32,
 }
 
+/// A recipient and the amount it is owed right now.
+///
+/// Returned by [`releasable_all`](crate::Lumengate::releasable_all): a read-only
+/// view, so `owed` is what [`release`](crate::Lumengate::release) would transfer
+/// at the moment of the call, not a stored value.
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct Pending {
+    pub recipient: Address,
+    pub owed: i128,
+}
+
 /// Instance-storage keys.
 ///
 /// Every entry lives in instance storage so that configuration and payout
