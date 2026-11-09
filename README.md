@@ -1,5 +1,7 @@
 # Lumengate
 
+[![CI](https://github.com/LumenAnvil/lumengate/actions/workflows/ci.yml/badge.svg)](https://github.com/LumenAnvil/lumengate/actions/workflows/ci.yml)
+
 A deployable, reusable **payment splitter** for Stellar Soroban.
 
 Configure a set of recipients and their share weights once, at deployment. From then on the
