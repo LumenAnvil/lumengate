@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Format, lint and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install the Rust toolchain
+        run: rustup toolchain install stable --profile minimal --component rustfmt,clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Format
+        run: cargo fmt --all --check
+
+      - name: Clippy
+        run: cargo clippy --all-targets --locked -- -D warnings
+
+      # The suite runs natively (no wasm), exercising the payout math and its
+      # invariants.
+      - name: Test
+        run: cargo test --locked
+
+  wasm:
+    name: Build the contract wasm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install the Rust toolchain
+        run: rustup toolchain install stable --profile minimal
+
+      # The deployable artifact targets the Soroban VM. `stellar contract build`
+      # wraps this exact cargo invocation, so building here proves the contract
+      # compiles to wasm without installing the whole CLI.
+      - name: Add the wasm target
+        run: rustup target add wasm32v1-none
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build
+        run: cargo build --locked --target wasm32v1-none --release
+
+  msrv:
+    name: Build on the declared MSRV
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Cargo.toml pins rust-version; CI must prove that version still builds.
+      - name: Install the MSRV toolchain (1.91.0)
+        run: rustup toolchain install 1.91.0 --profile minimal
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build
+        run: cargo +1.91.0 build --locked
