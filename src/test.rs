@@ -7,7 +7,7 @@ use soroban_sdk::{
     vec, Address, Env, Event as _, Vec,
 };
 
-use crate::types::{Error, Initialized, Recipient, Release, MAX_RECIPIENTS};
+use crate::types::{Error, Initialized, Pending, Recipient, Release, MAX_RECIPIENTS};
 use crate::{Lumengate, LumengateClient};
 
 // ---------------------------------------------------------------------------
@@ -653,6 +653,76 @@ fn a_release_that_pays_nothing_emits_no_event() {
         s.env.events().all().filter_by_contract(&s.client.address),
         std::vec![],
     );
+}
+
+// ---------------------------------------------------------------------------
+// Batch views
+// ---------------------------------------------------------------------------
+
+#[test]
+fn releasable_all_reports_every_recipient_in_order() {
+    let s = Splitter::new(&[1, 2, 3]);
+    s.deposit(600); // split 1:2:3 → 100, 200, 300, no remainder
+
+    let expected = vec![
+        &s.env,
+        Pending {
+            recipient: s.recipient(0),
+            owed: 100,
+        },
+        Pending {
+            recipient: s.recipient(1),
+            owed: 200,
+        },
+        Pending {
+            recipient: s.recipient(2),
+            owed: 300,
+        },
+    ];
+    assert_eq!(s.client.releasable_all(), expected);
+
+    // The batch view must agree with the single-recipient view.
+    for pending in expected.iter() {
+        assert_eq!(pending.owed, s.client.releasable(&pending.recipient));
+    }
+}
+
+#[test]
+fn pending_total_equals_what_release_all_moves() {
+    let s = Splitter::new(&[1, 1, 1]);
+    s.deposit(900); // split 1:1:1 → 300 each, no remainder
+
+    let pending = s.client.pending_total();
+    assert_eq!(pending, 900);
+    // release_all moves exactly the pending total and leaves nothing owed.
+    assert_eq!(s.client.release_all(), pending);
+    assert_eq!(s.client.pending_total(), 0);
+    s.assert_invariants();
+}
+
+#[test]
+fn pending_total_excludes_dust_left_in_the_splitter() {
+    let s = Splitter::new(&[1, 1]);
+    s.deposit(3); // floor(3/2) = 1 each; the odd unit stays as dust
+
+    assert_eq!(s.client.pending_total(), 2);
+    assert_eq!(s.client.release_all(), 2);
+    assert_eq!(s.undistributed(), 1);
+    s.assert_invariants();
+}
+
+#[test]
+fn batch_views_change_no_state() {
+    let s = Splitter::new(&[2, 3]);
+    s.deposit(500);
+    let before = s.undistributed();
+
+    let _ = s.client.releasable_all();
+    let _ = s.client.pending_total();
+
+    assert_eq!(s.client.total_released(), 0, "a view must not pay anything");
+    assert_eq!(s.undistributed(), before, "a view must not move funds");
+    s.assert_invariants();
 }
 
 // ---------------------------------------------------------------------------
