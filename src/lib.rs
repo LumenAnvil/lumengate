@@ -7,7 +7,9 @@ mod test;
 
 use soroban_sdk::{contract, contractimpl, contractmeta, token, Address, Env, Map, Vec};
 
-use crate::types::{Config, DataKey, Error, Initialized, Recipient, Release, MAX_RECIPIENTS};
+use crate::types::{
+    Config, DataKey, Error, Initialized, Pending, Recipient, Release, MAX_RECIPIENTS,
+};
 
 contractmeta!(key = "name", val = "lumengate");
 contractmeta!(
@@ -299,6 +301,48 @@ impl Lumengate {
     pub fn releasable(env: Env, who: Address) -> Result<i128, Error> {
         let config = read_config(&env);
         compute_owed(&env, &config, &who)
+    }
+
+    /// What every recipient is owed right now, in construction order.
+    ///
+    /// A read-only companion to [`Lumengate::release_all`]: one call returns the
+    /// amount [`Lumengate::release`] would pay each recipient at this moment, so
+    /// a caller — a dashboard, say — can show or total pending payouts without a
+    /// separate [`Lumengate::releasable`] call per recipient. It moves nothing.
+    ///
+    /// # Errors
+    ///
+    /// [`Error::MathOverflow`] if computing any recipient's entitlement would
+    /// overflow.
+    pub fn releasable_all(env: Env) -> Result<Vec<Pending>, Error> {
+        let config = read_config(&env);
+        let mut pending = Vec::new(&env);
+        for recipient in config.recipients.iter() {
+            let owed = compute_owed(&env, &config, &recipient.address)?;
+            pending.push_back(Pending {
+                recipient: recipient.address,
+                owed,
+            });
+        }
+        Ok(pending)
+    }
+
+    /// The total amount [`Lumengate::release_all`] would pay out right now.
+    ///
+    /// The sum of every recipient's owed amount, without moving anything. Equal
+    /// to what `release_all` would return if called immediately.
+    ///
+    /// # Errors
+    ///
+    /// [`Error::MathOverflow`] if the entitlement arithmetic would overflow.
+    pub fn pending_total(env: Env) -> Result<i128, Error> {
+        let config = read_config(&env);
+        let mut total: i128 = 0;
+        for recipient in config.recipients.iter() {
+            let owed = compute_owed(&env, &config, &recipient.address)?;
+            total = total.checked_add(owed).ok_or(Error::MathOverflow)?;
+        }
+        Ok(total)
     }
 
     /// Pays `who` everything they are owed and returns the amount transferred.
